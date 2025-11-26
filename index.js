@@ -148,7 +148,48 @@ app.post('/zoneamento', async (req, res) => {
   }
 });
 
-// Rota que recebe um endereço, geoc// Rota POST para /zoneamento-wati
+// Rota POST para /zoneamento-endereco (compativel com o chatbot antigo do WATI)
+app.post('/zoneamento-endereco', async (req, res) => {
+  // Aceita tanto 'endereco' quanto 'endereco_imovel' (nomes que o WATI pode enviar)
+  const endereco = req.body.endereco || req.body.endereco_imovel;
+
+  if (!endereco) {
+    return res.status(400).json({
+      success: false,
+      error: 'O campo "endereco" é obrigatório.',
+    });
+  }
+
+  try {
+    // 1) Geocodifica o endereço
+    const { enderecoFormatado, lat, lng } = await geocodeEndereco(endereco);
+
+    // 2) Consulta zoneamento
+    const resultadoZoneamento = await consultarZoneamento(lat, lng);
+
+    // 3) Retorna com os nomes de variáveis esperados pelo WATI
+    res.json({
+      success: true,
+      endereco_original: endereco,
+      endereco_formatado: enderecoFormatado,
+      lat,
+      lng,
+      zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
+      zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
+      // Aliases para compatibilidade
+      mensagem_whatsapp: `Endereço: ${enderecoFormatado}\nZoneamento: ${resultadoZoneamento.codigo}`,
+    });
+  } catch (error) {
+    console.error('Erro em /zoneamento-endereco:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao processar o endereço.',
+      details: error.message,
+    });
+  }
+});
+
+// Rota POST para /zoneamento-wati
 app.post('/zoneamento-wati', async (req, res) => {
   // Aceita tanto 'endereco' quanto 'endereco_imovel' (nomes que o WATI pode enviar)
   const endereco = req.body.endereco || req.body.endereco_imovel;
