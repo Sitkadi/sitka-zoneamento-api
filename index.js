@@ -208,11 +208,11 @@ app.post('/zoneamento-wati', async (req, res) => {
     // 2) Consulta zoneamento
     const resultadoZoneamento = await consultarZoneamento(lat, lng);
 
-    // 3) Retorna APENAS as variáveis WATI
+    // 3) Retorna com os nomes de variaveis esperados pelo WATI
     res.json({
-      end_fmt: enderecoFormatado,
-      zon_cod: resultadoZoneamento.codigo || 'Não identificado',
-      zon_txt: resultadoZoneamento.texto || 'Zoneamento não encontrado',
+      endereco_formatado: enderecoFormatado,
+      zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
+      zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
     });
   } catch (error) {
     console.error('Erro em /zoneamento-wati:', error);
