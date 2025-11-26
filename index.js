@@ -258,6 +258,40 @@ app.get('/zoneamento-wati', async (req, res) => {
   }
 });
 
+// Rota POST para /zoneamento-wati-v2 (versao alternativa que aceita body JSON)
+app.post('/zoneamento-wati-v2', async (req, res) => {
+  const { endereco } = req.body;
+
+  if (!endereco) {
+    return res.status(400).json({
+      success: false,
+      error: 'O campo "endereco" eh obrigatorio.',
+    });
+  }
+
+  try {
+    // 1) Geocodifica o endereco
+    const { enderecoFormatado, lat, lng } = await geocodeEndereco(endereco);
+
+    // 2) Consulta zoneamento
+    const resultadoZoneamento = await consultarZoneamento(lat, lng);
+
+    // 3) Retorna com os nomes de variaveis esperados pelo WATI
+    res.json({
+      endereco_formatado: enderecoFormatado,
+      zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
+      zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
+    });
+  } catch (error) {
+    console.error('Erro em /zoneamento-wati-v2 (POST):', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao processar o endereco.',
+      details: error.message,
+    });
+  }
+});
+
 // Sobe o servidor
 const porta = PORT || 3000;
 app.listen(porta, () => {
@@ -268,4 +302,5 @@ app.listen(porta, () => {
   console.log(`   - POST /zoneamento (lat, lng)`);
   console.log(`   - POST /zoneamento-endereco (endereco)`);
   console.log(`   - POST /zoneamento-wati (endereco) - Retorna variaveis WATI`);
+  console.log(`   - POST /zoneamento-wati-v2 (endereco) - Versao alternativa com body JSON`);
 });
