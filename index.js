@@ -218,7 +218,41 @@ app.post('/zoneamento-wati', async (req, res) => {
     console.error('Erro em /zoneamento-wati:', error);
     res.status(500).json({
       success: false,
-      error: 'Erro ao processar o endereço.',
+      error: 'Erro ao processar o endereco.',
+      details: error.message,
+    });
+  }
+});
+
+// Rota GET para /zoneamento-wati (para WATI que usa GET com query parameters)
+app.get('/zoneamento-wati', async (req, res) => {
+  const { endereco } = req.query;
+
+  if (!endereco) {
+    return res.status(400).json({
+      success: false,
+      error: 'O parametro "endereco" eh obrigatorio.',
+    });
+  }
+
+  try {
+    // 1) Geocodifica o endereco
+    const { enderecoFormatado, lat, lng } = await geocodeEndereco(endereco);
+
+    // 2) Consulta zoneamento
+    const resultadoZoneamento = await consultarZoneamento(lat, lng);
+
+    // 3) Retorna APENAS as variaveis WATI
+    res.json({
+      end_fmt: enderecoFormatado,
+      zon_cod: resultadoZoneamento.codigo || 'Nao identificado',
+      zon_txt: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
+    });
+  } catch (error) {
+    console.error('Erro em /zoneamento-wati (GET):', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao processar o endereco.',
       details: error.message,
     });
   }
