@@ -175,9 +175,47 @@ app.post('/zoneamento-endereco', async (req, res) => {
       lng,
       cod_zoneamento: resultadoZoneamento.codigo,
       txt_zoneamento: resultadoZoneamento.texto,
+      // Variáveis para WATI (formato esperado pelo chatbot)
+      end_fmt: enderecoFormatado,
+      zon_cod: resultadoZoneamento.codigo,
+      zon_txt: resultadoZoneamento.texto,
     });
   } catch (error) {
     console.error('Erro em /zoneamento-endereco:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao processar o endereço.',
+      details: error.message,
+    });
+  }
+});
+
+// Rota alternativa que retorna APENAS as variáveis WATI (para webhooks simples)
+app.post('/zoneamento-wati', async (req, res) => {
+  const { endereco } = req.body;
+
+  if (!endereco) {
+    return res.status(400).json({
+      success: false,
+      error: 'O campo "endereco" é obrigatório.',
+    });
+  }
+
+  try {
+    // 1) Geocodifica o endereço
+    const { enderecoFormatado, lat, lng } = await geocodeEndereco(endereco);
+
+    // 2) Consulta zoneamento
+    const resultadoZoneamento = await consultarZoneamento(lat, lng);
+
+    // 3) Retorna APENAS as variáveis WATI
+    res.json({
+      end_fmt: enderecoFormatado,
+      zon_cod: resultadoZoneamento.codigo || 'Não identificado',
+      zon_txt: resultadoZoneamento.texto || 'Zoneamento não encontrado',
+    });
+  } catch (error) {
+    console.error('Erro em /zoneamento-wati:', error);
     res.status(500).json({
       success: false,
       error: 'Erro ao processar o endereço.',
@@ -195,4 +233,5 @@ app.listen(porta, () => {
   console.log(`   - GET  /health`);
   console.log(`   - POST /zoneamento (lat, lng)`);
   console.log(`   - POST /zoneamento-endereco (endereco)`);
+  console.log(`   - POST /zoneamento-wati (endereco) - Retorna variaveis WATI`);
 });
