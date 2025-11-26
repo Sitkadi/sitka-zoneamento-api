@@ -171,17 +171,19 @@ app.post('/zoneamento-endereco', async (req, res) => {
     // IMPORTANTE: O WATI mapeia as chaves da resposta para as variáveis de contato
     res.json({
       // Variáveis que o WATI vai mapear (conforme configurado no webhook)
+      endereco_formatado: enderecoFormatado,
+      zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
+      zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
+      
+      // Aliases para compatibilidade
       end_fmt: enderecoFormatado,
       zon_cod: resultadoZoneamento.codigo || 'Nao identificado',
       zon_txt: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
       
       // Dados adicionais para referência
       endereco_original: endereco,
-      endereco_formatado: enderecoFormatado,
       lat,
       lng,
-      zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
-      zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
       mensagem_whatsapp: `Endereço: ${enderecoFormatado}\nZoneamento: ${resultadoZoneamento.codigo}`,
     });
   } catch (error) {
