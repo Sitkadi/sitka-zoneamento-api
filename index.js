@@ -377,6 +377,39 @@ app.get('/webhook/debug-get', async (req, res) => {
   });
 });
 
+// Rota GET para /zoneamento-endereco-get (RECOMENDADO para WATI - aceita variáveis em URL)
+app.get('/zoneamento-endereco-get', async (req, res) => {
+  try {
+    const { endereco } = req.query;
+
+    if (!endereco || endereco.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Parâmetro "endereco" eh obrigatorio',
+      });
+    }
+
+    // 1) Geocodifica
+    const { enderecoFormatado, lat, lng } = await geocodeEndereco(endereco);
+
+    // 2) Consulta zoneamento
+    const resultadoZoneamento = await consultarZoneamento(lat, lng);
+
+    // 3) Retorna as variaveis WATI
+    res.json({
+      endereco_formatado: enderecoFormatado,
+      zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
+      zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
+    });
+  } catch (error) {
+    console.error('Erro em GET /zoneamento-endereco-get:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao processar endereco',
+    });
+  }
+});
+
 // Rota GET para /webhook/zoneamento (aceita endereco como query parameter)
 app.get('/webhook/zoneamento', async (req, res) => {
   try {
