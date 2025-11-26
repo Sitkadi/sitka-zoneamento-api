@@ -295,11 +295,37 @@ app.post('/zoneamento-wati-v2', async (req, res) => {
 
 // Rota POST para /webhook/debug (para debugar o que está sendo recebido)
 app.post('/webhook/debug', async (req, res) => {
-  console.log('DEBUG - Body recebido:', JSON.stringify(req.body, null, 2));
+  console.log('\n========== DEBUG WEBHOOK WATI ==========');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Body completo:', JSON.stringify(req.body, null, 2));
+  console.log('Query params:', JSON.stringify(req.query, null, 2));
+  console.log('========================================\n');
+  
   res.json({
     debug: true,
+    timestamp: new Date().toISOString(),
     body_recebido: req.body,
-    endereco_recebido: req.body.endereco || 'VAZIO',
+    query_recebido: req.query,
+    endereco_em_body: req.body.endereco || req.body.endereco_imovel || 'NAO ENCONTRADO',
+    endereco_em_query: req.query.endereco || 'NAO ENCONTRADO',
+    todas_as_chaves: Object.keys(req.body),
+  });
+});
+
+// Rota GET para /webhook/debug-get (para debugar GET requests)
+app.get('/webhook/debug-get', async (req, res) => {
+  console.log('\n========== DEBUG WEBHOOK GET ==========');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Query params:', JSON.stringify(req.query, null, 2));
+  console.log('========================================\n');
+  
+  res.json({
+    debug: true,
+    timestamp: new Date().toISOString(),
+    query_recebido: req.query,
+    endereco_em_query: req.query.endereco || 'NAO ENCONTRADO',
   });
 });
 
@@ -416,4 +442,6 @@ app.listen(porta, () => {
   console.log(`   - POST /zoneamento-wati-v2 (endereco) - Versao alternativa com body JSON`);
   console.log(`   - POST /webhook/zoneamento (endereco) - Novo endpoint para WATI webhook`);
   console.log(`   - POST /webhook/zoneamento-wati (endereco) - Compativel com WATI (RECOMENDADO)`);
+  console.log(`   - POST /webhook/debug - DEBUG: mostra o que WATI está enviando`);
+  console.log(`   - GET  /webhook/debug-get - DEBUG: mostra query params`);
 });
