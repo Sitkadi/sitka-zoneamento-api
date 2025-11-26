@@ -148,9 +148,10 @@ app.post('/zoneamento', async (req, res) => {
   }
 });
 
-// Rota que recebe um endereço, geocodifica e retorna o zoneamento
-app.post('/zoneamento-endereco', async (req, res) => {
-  const { endereco } = req.body;
+// Rota que recebe um endereço, geoc// Rota POST para /zoneamento-wati
+app.post('/zoneamento-wati', async (req, res) => {
+  // Aceita tanto 'endereco' quanto 'endereco_imovel' (nomes que o WATI pode enviar)
+  const endereco = req.body.endereco || req.body.endereco_imovel;
 
   if (!endereco) {
     return res.status(400).json({
@@ -292,6 +293,39 @@ app.post('/zoneamento-wati-v2', async (req, res) => {
   }
 });
 
+// Rota POST para /webhook/zoneamento (novo endpoint simples para WATI)
+app.post('/webhook/zoneamento', async (req, res) => {
+  try {
+    const { endereco } = req.body;
+
+    if (!endereco || endereco.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Campo "endereco" eh obrigatorio',
+      });
+    }
+
+    // 1) Geocodifica
+    const { enderecoFormatado, lat, lng } = await geocodeEndereco(endereco);
+
+    // 2) Consulta zoneamento
+    const resultadoZoneamento = await consultarZoneamento(lat, lng);
+
+    // 3) Retorna as variaveis WATI
+    res.json({
+      endereco_formatado: enderecoFormatado,
+      zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
+      zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
+    });
+  } catch (error) {
+    console.error('Erro em /webhook/zoneamento:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao processar endereco',
+    });
+  }
+});
+
 // Sobe o servidor
 const porta = PORT || 3000;
 app.listen(porta, () => {
@@ -303,4 +337,5 @@ app.listen(porta, () => {
   console.log(`   - POST /zoneamento-endereco (endereco)`);
   console.log(`   - POST /zoneamento-wati (endereco) - Retorna variaveis WATI`);
   console.log(`   - POST /zoneamento-wati-v2 (endereco) - Versao alternativa com body JSON`);
+  console.log(`   - POST /webhook/zoneamento (endereco) - Novo endpoint para WATI webhook`);
 });
