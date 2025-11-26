@@ -293,6 +293,16 @@ app.post('/zoneamento-wati-v2', async (req, res) => {
   }
 });
 
+// Rota POST para /webhook/debug (para debugar o que está sendo recebido)
+app.post('/webhook/debug', async (req, res) => {
+  console.log('DEBUG - Body recebido:', JSON.stringify(req.body, null, 2));
+  res.json({
+    debug: true,
+    body_recebido: req.body,
+    endereco_recebido: req.body.endereco || 'VAZIO',
+  });
+});
+
 // Rota POST para /webhook/zoneamento (novo endpoint simples para WATI)
 app.post('/webhook/zoneamento', async (req, res) => {
   try {
