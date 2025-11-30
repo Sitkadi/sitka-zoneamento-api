@@ -27,9 +27,17 @@ async function geocodeEndereco(endereco) {
     );
   }
 
+  // 🔧 SOLUÇÃO v1: Pegar até primeira vírgula e adicionar ", São Paulo"
+  let enderecoProcessado = endereco;
+  if (endereco.includes(',')) {
+    enderecoProcessado = endereco.split(',')[0].trim();
+  }
+  enderecoProcessado = enderecoProcessado + ', São Paulo';
+
   const url =
     'https://maps.googleapis.com/maps/api/geocode/json?address=' +
-    encodeURIComponent(endereco) +
+    encodeURIComponent(enderecoProcessado) +
+    '&components=administrative_area:SP|country:BR' +
     '&key=' +
     GOOGLE_API_KEY;
 
