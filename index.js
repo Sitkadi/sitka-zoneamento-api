@@ -29,9 +29,18 @@ async function geocodeEndereco(endereco) {
 
   // 🔧 SOLUÇÃO v1: Pegar até primeira vírgula e adicionar ", São Paulo"
   let enderecoProcessado = endereco;
+  let numeroImovel = '';
+  
   if (endereco.includes(',')) {
     enderecoProcessado = endereco.split(',')[0].trim();
   }
+  
+  // Extrair número do imóvel (último número da string)
+  const match = enderecoProcessado.match(/(\d+)\s*$/);
+  if (match) {
+    numeroImovel = match[1];
+  }
+  
   enderecoProcessado = enderecoProcessado + ', São Paulo';
 
   const url =
@@ -55,6 +64,7 @@ async function geocodeEndereco(endereco) {
     enderecoFormatado: formatted_address,
     lat,
     lng,
+    numeroImovel: numeroImovel,
   };
 }
 
@@ -170,7 +180,7 @@ app.post('/zoneamento-endereco', async (req, res) => {
 
   try {
     // 1) Geocodifica o endereço
-    const { enderecoFormatado, lat, lng } = await geocodeEndereco(endereco);
+    const { enderecoFormatado, lat, lng, numeroImovel } = await geocodeEndereco(endereco);
 
     // 2) Consulta zoneamento
     const resultadoZoneamento = await consultarZoneamento(lat, lng);
@@ -180,11 +190,13 @@ app.post('/zoneamento-endereco', async (req, res) => {
     res.json({
       // Variáveis que o WATI vai mapear (conforme configurado no webhook)
       endereco_formatado: enderecoFormatado,
+      numero_imovel: numeroImovel,
       zoneamento: resultadoZoneamento.codigo || 'Nao identificado',
       zoneamento_texto: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
       
       // Aliases para compatibilidade
       end_fmt: enderecoFormatado,
+      num_imovel: numeroImovel,
       zon_cod: resultadoZoneamento.codigo || 'Nao identificado',
       zon_txt: resultadoZoneamento.texto || 'Zoneamento nao encontrado',
       
@@ -192,7 +204,7 @@ app.post('/zoneamento-endereco', async (req, res) => {
       endereco_original: endereco,
       lat,
       lng,
-      mensagem_whatsapp: `Endereço: ${enderecoFormatado}\nZoneamento: ${resultadoZoneamento.codigo}`,
+      mensagem_whatsapp: `Endereço: ${enderecoFormatado}\nNúmero: ${numeroImovel}\nZoneamento: ${resultadoZoneamento.codigo}`,
     });
   } catch (error) {
     console.error('Erro em /zoneamento-endereco:', error);
