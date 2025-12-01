@@ -31,14 +31,15 @@ async function geocodeEndereco(endereco) {
   let enderecoProcessado = endereco;
   let numeroImovel = '';
   
-  if (endereco.includes(',')) {
-    enderecoProcessado = endereco.split(',')[0].trim();
+  // Extrair número do imóvel ANTES de remover parte após vírgula
+  const matchNumero = endereco.match(/(\d+)\s*(?:,|$)/);
+  if (matchNumero) {
+    numeroImovel = matchNumero[1];
   }
   
-  // Extrair número do imóvel (último número da string)
-  const match = enderecoProcessado.match(/(\d+)\s*$/);
-  if (match) {
-    numeroImovel = match[1];
+  // Depois remover tudo após a vírgula
+  if (endereco.includes(',')) {
+    enderecoProcessado = endereco.split(',')[0].trim();
   }
   
   enderecoProcessado = enderecoProcessado + ', São Paulo';
